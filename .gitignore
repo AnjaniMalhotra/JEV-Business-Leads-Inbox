@@ -1,0 +1,11 @@
+.env
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+data/*.db
+.DS_Store
+
+# Never commit sign-in files or tool caches
+secrets/
+.ruff_cache/

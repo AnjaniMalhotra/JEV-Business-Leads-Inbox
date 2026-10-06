@@ -1,0 +1,27 @@
+# Business theme: deep teal accent and warm grey-green neutrals (the Smart Inbox apps use navy).
+[theme]
+base = "light"
+primaryColor = "#0F5F5C"
+backgroundColor = "#FFFFFF"
+secondaryBackgroundColor = "#F2F7F6"
+textColor = "#1B2B2A"
+linkColor = "#0F5F5C"
+font = "Inter:https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap, sans-serif"
+headingFontSizes = ["1.75rem", "1.35rem", "1.1rem", "1rem", "0.95rem", "0.9rem"]
+headingFontWeights = [650, 600, 600, 600, 600, 600]
+metricValueFontSize = "1.6rem"
+baseRadius = "small"
+borderColor = "#DCE6E4"
+dataframeHeaderBackgroundColor = "#F2F7F6"
+showSidebarBorder = true
+chartCategoricalColors = ["#0F5F5C", "#14B8A6", "#94A3B8", "#B45309", "#0E7490", "#65A30D"]
+# Chip colours: "blue" chips (Reply needed, Normal) become teal to match the accent
+blueColor = "#0F766E"
+blueBackgroundColor = "#E3F4F1"
+blueTextColor = "#0F5F5C"
+
+[theme.sidebar]
+backgroundColor = "#F5FAF9"
+
+[client]
+toolbarMode = "minimal"

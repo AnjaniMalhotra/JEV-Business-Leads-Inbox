@@ -1,0 +1,51 @@
+# Our company. Jev reads this to judge how well a lead fits (company_fit).
+company_profile: >-
+  Northwind Analytics sells a B2B data analytics platform (dashboards, AI insights, a data API).
+  Ideal customers: companies with 200 to 5,000 employees in retail, e-commerce, fintech, banking,
+  insurance, logistics, travel or healthcare. Typical buyers: Head of Data, CTO, CFO, VP Operations,
+  VP Engineering. Plans start at $20k per year; no free tier.
+
+# Priority (all emails). The Settings panel can override these for the session.
+priority_weights:
+  urgency: 0.45
+  needs_reply: 0.20
+  red_flag: 0.20
+  has_deadline: 0.10
+  vip_sender: 0.05
+
+# Priority score -> bucket (checked top-down); anything lower is P4
+buckets:
+  P1: 0.65
+  P2: 0.45
+  P3: 0.25
+
+# Lead score (leads only) = weighted mix of Jev's lead answers, 0..1
+lead_weights:
+  buying_intent: 0.35
+  company_fit: 0.30
+  decision_maker: 0.15
+  budget_mentioned: 0.10
+  timeline: 0.10
+timeline_value: {now: 1.0, this_quarter: 0.7, later: 0.3, unknown: 0.1}
+
+# Lead score -> grade (checked top-down); anything lower is D.
+# A = hot lead: always "Do now". B: at least "Important".
+lead_grades:
+  A: 0.70
+  B: 0.50
+  C: 0.30
+
+# category/action confidence below this -> "Needs review"
+review_confidence: 0.6
+
+# red_flag probability above this forces P1
+red_flag_override: 0.8
+
+# Senders or domains that get the VIP boost (key accounts)
+vip_senders:
+  - ceo@northwind.io
+  - "@bigretail.com"
+  - "@globalmart.com"
+
+# Characters of body sent to a model
+max_body_chars: 10000
