@@ -6,6 +6,7 @@ from db import feedback
 from triage.pipeline import triage_email
 from ui.labels import (ACTION_LABEL, CATEGORY_LABEL, FIT_LABEL, GRADE, INTENT_LABEL, PRIORITY, ROUTE_LABEL,
                        TIMELINE_LABEL, URGENCY_LABEL, pct, urgency_label)
+from ui.jev_key import jev_error
 from ui.sidebar import keys
 
 
@@ -17,7 +18,7 @@ def show_decision(row) -> None:
             try:
                 triage_email({"id": email_id, "sender": row["sender"], "subject": row["subject"], "body": row["body"]}, keys())
             except Exception as exc:
-                st.error(f"Jev call failed: {exc}")
+                st.error(jev_error(exc))
             st.rerun()
         return
 

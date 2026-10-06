@@ -11,6 +11,7 @@ from ui.email_view import open_email
 from ui.filters import filters
 from ui.gmail_ui import connect_panel, disconnect, fetch_mail, fetch_options, login
 from ui.labels import money
+from ui.jev_key import jev_error
 from ui.sidebar import keys
 
 setup()
@@ -29,7 +30,7 @@ def run_jev(only_new: bool) -> None:  # Sort emails with a progress bar
                              only_new=only_new)
     except Exception as exc:  # bad key, network, rate limit…
         bar.empty()
-        st.error(f"Jev couldn't sort the emails: {exc}")
+        st.error(jev_error(exc))
         return
     cost = sum(r.get("cost_usd") or 0 for r in results)
     st.session_state.last_run = f"Sorted {len(results)} emails in {time.perf_counter() - start:.1f}s for {money(cost)}."
@@ -68,6 +69,8 @@ with more.popover("", icon=":material/more_horiz:"):  # The ⋯ menu
 
 if "last_run" in st.session_state:
     st.success(st.session_state.pop("last_run"))
+if "jev_problem" in st.session_state:  # fetched fine, but Jev couldn't sort
+    st.error(st.session_state.pop("jev_problem"))
 if df.empty:  # First visit: connect your own Gmail, or try the sample inbox
     left, right = st.columns([3, 2], gap="large")
     with left.container(border=True):

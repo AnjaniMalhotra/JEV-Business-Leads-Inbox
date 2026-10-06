@@ -7,6 +7,7 @@ from db import gmail_store
 from gmail import client
 from gmail.fetch import fetch
 from triage.pipeline import triage_all
+from ui.jev_key import jev_error
 from ui.sidebar import keys
 
 GUIDE = """
@@ -75,8 +76,12 @@ def fetch_mail() -> str:
     summary = f"Fetched {len(emails)} emails from Gmail, {new} new."
     if new and ss.get("gmail_autosort", True):  # Sort the new ones straight away
         bar = st.progress(0.0, text="Jev is reading the new emails…")
-        triage_all(keys(), lambda i, n, e: bar.progress(i / n, text=f"Jev is reading email {i} of {n}"), only_new=True)
-        summary += f" Jev sorted {new}."
+        try:  # a Jev problem must not undo the fetch
+            triage_all(keys(), lambda i, n, e: bar.progress(i / n, text=f"Jev is reading email {i} of {n}"), only_new=True)
+            summary += f" Jev sorted {new}."
+        except Exception as exc:
+            bar.empty()
+            ss.jev_problem = jev_error(exc)
     return summary
 
 
@@ -85,8 +90,9 @@ def connect_panel() -> None:
     st.markdown("#### Connect your Gmail")
     st.caption("Your inbox, sorted by Jev. You need a Gmail **app password**; the guide below shows how.")
     with st.form("gmail_connect"):
-        address = st.text_input("Gmail address", placeholder="you@gmail.com")
-        password = st.text_input("App password (16 letters)", type="password", placeholder="abcd efgh ijkl mnop")
+        address = st.text_input("Gmail address", placeholder="you@gmail.com", autocomplete="off")
+        password = st.text_input("App password (16 letters)", type="password", placeholder="abcd efgh ijkl mnop",
+                                 autocomplete="off")  # discourage the browser from saving it
         go = st.form_submit_button("Connect and fetch", type="primary", icon=":material/mail:")
     with st.expander("How do I get an app password, and why does the app need it?", icon=":material/help:"):
         st.markdown(GUIDE)

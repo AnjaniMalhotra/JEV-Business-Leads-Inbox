@@ -60,3 +60,18 @@ def classify(email: dict, keys: dict) -> dict:  # Ask Jev every question about o
     result["cost_usd"] = result["input_tokens"] / 1e6 * JEV_PRICE  # Jev bills input tokens only
     result["provider"] = "jev"
     return result
+
+
+def check_key(key: str) -> str:
+    """'ok', 'rejected' or 'unreachable': a free request (list models) that only checks the key."""
+    import urllib.error
+    import urllib.request
+
+    request = urllib.request.Request("https://api.typesafe.ai/v1/models", headers={"Authorization": f"Bearer {key}"})
+    try:
+        urllib.request.urlopen(request, timeout=10)
+        return "ok"
+    except urllib.error.HTTPError as exc:
+        return "rejected" if exc.code in (401, 403) else "unreachable"
+    except Exception:  # offline, DNS, timeout…
+        return "unreachable"

@@ -5,6 +5,7 @@ import streamlit as st
 
 from triage import config
 from triage.config import MODELS, jev_is_mock, llm_is_mock
+from ui.jev_key import jev_key_status
 
 
 def llm_spec(provider: str, model: str, price_in: float, price_out: float) -> dict:
@@ -28,9 +29,11 @@ def sidebar() -> None:
     with st.sidebar:
         # Closed once the Jev key is set
         with st.expander("API keys", expanded=not ss.get("jev_key"), icon=":material/key:"):
-            st.text_input("Jev", type="password", key="jev_key", help="From typesafe.ai")
+            # autocomplete="new-password": browsers must not fill these with a saved password (e.g. a Gmail app password)
+            st.text_input("Jev", type="password", key="jev_key", help="From typesafe.ai", autocomplete="new-password")
+            jev_key_status()
             for provider in MODELS:
-                st.text_input(provider, type="password", key=f"key_{provider}", help="Optional")
+                st.text_input(provider, type="password", key=f"key_{provider}", help="Optional", autocomplete="new-password")
             st.caption("Kept in this session only, never saved. An empty key runs that model in demo mode.")
 
             names = [f"{p} · {m}" for p, models in MODELS.items() for m in models] + ["Other model…"]
@@ -52,7 +55,8 @@ def sidebar() -> None:
                       ("provider", "model", "llm_key", "price_in", "price_out", "name")}}
         k = ss["keys"]  # (ss.keys would be the session state's own keys() method)
         gmail = f"connected as {ss.gmail_login[0]} (this session only)" if ss.get("gmail_login") else "not connected"
-        st.caption(f"**Gmail:** {gmail}  \n**Jev:** {'connected' if not jev_is_mock(k) else 'demo mode'}  \n"
+        jev = {"ok": "key accepted", "rejected": "key rejected", "unreachable": "key not checked"}.get(ss.get("jev_status"), "demo mode")
+        st.caption(f"**Gmail:** {gmail}  \n**Jev:** {jev if not jev_is_mock(k) else 'demo mode'}  \n"
                    f"**Replies:** {k.get('name')}{'' if not llm_is_mock(k) else ' (demo)'}")
         _settings()
 
