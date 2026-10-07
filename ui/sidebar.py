@@ -7,6 +7,8 @@ from triage import config
 from triage.config import MODELS, jev_is_mock, llm_is_mock
 from ui.jev_key import jev_key_status
 
+DEFAULT_DRAFT_MODEL = "Gemini · gemini-3.5-flash-lite"  # the fastest, cheapest Gemini here
+
 
 def llm_spec(provider: str, model: str, price_in: float, price_out: float) -> dict:
     """A keys-style dict for one LLM (what llm_baseline and reply expect)."""
@@ -37,7 +39,8 @@ def sidebar() -> None:
             st.caption("Kept in this session only, never saved. An empty key runs that model in demo mode.")
 
             names = [f"{p} · {m}" for p, models in MODELS.items() for m in models] + ["Other model…"]
-            pick = st.selectbox("Replies are written by", names, key="draft_model")  # Which LLM drafts replies
+            pick = st.selectbox("Replies are written by", names, index=names.index(DEFAULT_DRAFT_MODEL),  # Which LLM drafts replies
+                                key="draft_model")
             if pick == "Other model…":
                 provider = st.selectbox("Provider", list(MODELS), key="custom_provider")
                 model = st.text_input("Model name", key="custom_name")
