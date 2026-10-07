@@ -87,3 +87,34 @@ def test_llm_prompt_and_schema():
     from openai.lib._pydantic import to_strict_json_schema  # schema must be accepted by the SDKs
 
     assert to_strict_json_schema(llm_baseline.LLMTriage)["properties"]["category"]["enum"]
+
+
+def test_reply_errors_are_explained():
+    from triage.reply import reply_error
+
+    assert "rejected the API key" in reply_error(Exception("400 INVALID_ARGUMENT API key not valid"), "Gemini")
+    assert "quota" in reply_error(Exception("429 RESOURCE_EXHAUSTED"), "Gemini")
+    assert "empty reply" in reply_error(ValueError("Gemini returned no text (reason: SAFETY)"), "Gemini")
+
+
+def test_empty_gemini_reply_raises(monkeypatch):
+    from types import SimpleNamespace
+
+    from triage import llm_baseline
+
+    empty = SimpleNamespace(text=None, candidates=[SimpleNamespace(finish_reason="SAFETY")],
+                            usage_metadata=SimpleNamespace(prompt_token_count=1, candidates_token_count=0, thoughts_token_count=0))
+    fake = SimpleNamespace(models=SimpleNamespace(generate_content=lambda **kw: empty))
+    monkeypatch.setattr(llm_baseline, "_client", lambda provider, key: fake)
+    try:
+        llm_baseline.call_llm({"provider": "Gemini", "model": "m", "llm_key": "k"}, "hi")
+        raise AssertionError("expected ValueError")
+    except ValueError as exc:
+        assert "SAFETY" in str(exc)
+
+
+def test_visitor_profile_reaches_the_models():
+    from triage.schema import email_state
+
+    business = lambda *profile: email_state({"sender": "a@b.com", "subject": "Hi", "body": "Sponsor?"}, 99, *profile)["our_company"]
+    assert business("YouTube creator") == "YouTube creator" and "Northwind" in business()  # no profile: config default

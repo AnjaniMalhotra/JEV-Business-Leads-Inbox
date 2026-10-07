@@ -5,8 +5,8 @@ import streamlit as st
 
 from db import feedback, gmail_store
 from gmail.drafts import DRAFTS_URL, save_reply_draft
+from triage.reply import TONES, draft_reply, reply_error
 from ui.gmail_ui import login, open_connection
-from triage.reply import TONES, draft_reply
 from ui.sidebar import keys
 
 
@@ -21,9 +21,12 @@ def show_reply(row) -> None:
         try:
             with st.spinner(f"{k.get('name', 'The LLM')} is writing…"):
                 feedback.save_draft(email_id, draft_reply(email, k, tone), "draft", k.get("name") if k.get("llm_key") else "demo")
-        except Exception as exc:  # bad key, wrong model name, rate limit…
-            st.error(f"Couldn't write a draft: {exc}")
-        st.rerun()
+            st.rerun()  # only on success: a rerun would wipe the error message below
+        except Exception as exc:  # bad key, wrong model name, rate limit, empty reply…
+            st.error(reply_error(exc, k.get("name") or "The LLM"), icon=":material/error:")
+    if not k.get("llm_key"):  # no key for the chosen provider: drafts are demo text
+        st.caption(f"No {k.get('provider') or 'LLM'} key in the sidebar, so drafts are demo text. "
+                   "Add the key in the box that matches *Replies are written by*.")
     if not draft:
         if row["sorted"] and row["needs_reply"] < 0.5:
             st.caption("Jev doesn't think this email needs a reply, but you can still draft one.")

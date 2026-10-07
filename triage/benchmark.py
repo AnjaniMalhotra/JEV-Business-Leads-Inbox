@@ -39,7 +39,7 @@ def run(  # Ask Jev and every chosen LLM about the same emails
     on_progress: Callable[[int, int], None] | None = None,
 ) -> str:
     """Jev plus every LLM in `llms` (each a keys-style dict with provider/model/llm_key/prices/name)."""
-    llms = [keys] if llms is None else llms
+    llms = [{**s, "profile": keys.get("profile")} for s in ([keys] if llms is None else llms)]  # same business for all
     run_id = datetime.now().strftime("%Y%m%d-%H%M%S-") + uuid.uuid4().hex[:4]
     jobs = [("jev", None, prepare(e)) for e in emails]  # One job per (model, email)
     jobs += [(spec.get("name") or "llm", spec, prepare(e)) for spec in llms for e in emails]

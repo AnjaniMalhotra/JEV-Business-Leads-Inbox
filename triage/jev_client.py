@@ -36,7 +36,7 @@ def _parse(response) -> dict:  # SDK response -> plain dicts
 
 def classify(email: dict, keys: dict) -> dict:  # Ask Jev every question about one email
     """Triage one (already cleaned) email. Returns answers + usage + cost + latency."""
-    state = email_state(email, app_config()["max_body_chars"])
+    state = email_state(email, app_config()["max_body_chars"], keys.get("profile"))
 
     if jev_is_mock(keys):  # No key: practice answers
         result = mock.jev_like(email)

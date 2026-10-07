@@ -59,11 +59,16 @@ def sidebar() -> None:
         st.caption(f"**Gmail:** {gmail}  \n**Jev:** {jev if not jev_is_mock(k) else 'demo mode'}  \n"
                    f"**Replies:** {k.get('name')}{'' if not llm_is_mock(k) else ' (demo)'}")
         _settings()
+        ss["keys"]["profile"] = session_config()["company_profile"]  # the visitor's business, for every model call
 
 
 def _settings() -> None:  # Session-only tweaks to config/app.yaml values
     cfg = session_config()
     with st.expander("Settings", icon=":material/tune:"):
+        cfg["company_profile"] = st.text_area(  # Jev judges fit and replies needed from this business's point of view
+            "**Your business**", cfg["company_profile"], height=150, key="profile_box",
+            help="What you do and who your ideal customers are. Jev reads every email from this point of view. "
+                 "After changing it, use Inbox ⋯ → Sort everything again.").strip() or config.app_config()["company_profile"]
         st.markdown("**What makes an email important?**")
         labels = {"urgency": "How urgent it is", "needs_reply": "Someone is waiting for a reply",
                   "red_flag": "It's a serious issue", "has_deadline": "It has a deadline",
@@ -83,7 +88,7 @@ def _settings() -> None:  # Session-only tweaks to config/app.yaml values
         st.caption(", ".join(cfg["vip_senders"]))
         if st.button("Reset settings"):
             st.session_state.cfg = copy.deepcopy(config.app_config())
-            for key in [k for k in st.session_state if k.startswith(("w_", "lw_")) or k == "review_conf"]:
+            for key in [k for k in st.session_state if k.startswith(("w_", "lw_")) or k in ("review_conf", "profile_box")]:
                 del st.session_state[key]
             st.rerun()
 

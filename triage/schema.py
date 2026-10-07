@@ -108,11 +108,11 @@ SCORE_FIELDS = ("urgency", "buying_intent", "company_fit")  # answers on a 0-3 s
 EVAL_FIELDS = ["category", "urgency", "action", "route_to", "needs_reply", "buying_intent"]
 
 
-def email_state(email: dict, max_chars: int) -> dict:  # What the model reads (the 'state')
-    """The state block both models see: our company profile (for fit) and the cleaned email."""
+def email_state(email: dict, max_chars: int, profile: str | None = None) -> dict:  # What the model reads (the 'state')
+    """The state block both models see: the business profile (the visitor's, else config) and the cleaned email."""
     from triage.config import app_config
 
     return {
-        "our_company": app_config()["company_profile"],
+        "our_company": profile or app_config()["company_profile"],
         "email": {"from": email["sender"], "subject": email["subject"], "body": email["body"][:max_chars]},
     }

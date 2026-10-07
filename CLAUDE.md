@@ -5,6 +5,7 @@ Public, multi-user version of `smart inbox gmail` for Streamlit Cloud. Visitors 
 Streamlit app: Jev (TypeSafe AI) routes business emails loaded from Gmail (or 100 sample emails) and qualifies leads (lead score + A–D grade in `triage/decide.py`, weights and `company_profile` in `config/app.yaml`); an LLM picked in the sidebar (Gemini / OpenAI / Claude) drafts replies and is the cost/speed/accuracy baseline.
 
 ## Rules
+- `company_profile` in `config/app.yaml` is only the default business; each visitor can replace it for their session (Settings → Your business). It reaches every model call as `keys["profile"]`.
 - Gmail access is IMAP with the visitor's address + app password, held only in `st.session_state["gmail_login"]`. Never write it to disk, logs, the database or caches. Mailbox opened read-only; only APPEND to Drafts. Never send, delete, move or flag mail.
 - Every visitor has their own database (`ui.data.session_db` via `config.set_db_resolver`). Never add module-level or `st.cache_*` state that holds email data or credentials; it would be shared across visitors.
 - No Google OAuth / `secrets/` files in this project.

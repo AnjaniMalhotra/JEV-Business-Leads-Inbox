@@ -43,11 +43,9 @@ def build_prompt(state: dict) -> str:  # Same questions as Jev, written as text
               "EMAIL:", json.dumps(state, ensure_ascii=False)]
     return "\n".join(lines)
 
-
 @lru_cache(maxsize=8)  # Reuse one client per provider
 def _client(provider: str, key: str):
-    """One client per provider+key, kept alive and reused.
-    (A client created inline gets garbage-collected, which closes its connection mid-request.)"""
+    """One client per provider+key, reused (an inline client gets garbage-collected mid-request)."""
     if provider == "Gemini":
         from google import genai
 
@@ -72,6 +70,8 @@ def call_llm(keys: dict, prompt: str, schema=None):  # One request to Gemini, Op
         config = types.GenerateContentConfig(response_mime_type="application/json", response_schema=schema) if schema else None
         r = client.models.generate_content(model=model, contents=prompt, config=config)
         u = r.usage_metadata
+        if not r.text:  # blocked by a safety filter, or the whole token budget went on thinking
+            raise ValueError(f"Gemini returned no text (reason: {r.candidates[0].finish_reason if r.candidates else 'blocked'})")
         out = schema.model_validate_json(r.text) if schema else r.text
         return out, u.prompt_token_count or 0, (u.candidates_token_count or 0) + (u.thoughts_token_count or 0)
     if provider == "OpenAI":
@@ -92,7 +92,7 @@ def call_llm(keys: dict, prompt: str, schema=None):  # One request to Gemini, Op
 
 
 def classify(email: dict, keys: dict) -> dict:  # The LLM answers the same questions as Jev
-    state = email_state(email, app_config()["max_body_chars"])
+    state = email_state(email, app_config()["max_body_chars"], keys.get("profile"))
     prompt = build_prompt(state)
 
     if llm_is_mock(keys):
