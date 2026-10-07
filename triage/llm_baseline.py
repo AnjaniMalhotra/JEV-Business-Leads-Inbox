@@ -1,13 +1,13 @@
 """The LLM chosen in the sidebar (Gemini, OpenAI or Claude) answering the same triage questions."""
 import json
 import time
-from functools import lru_cache
 from typing import Literal
 
 from pydantic import BaseModel, ValidationError
 
 from triage import mock
 from triage.config import app_config, llm_is_mock
+from triage.llm_clients import client as _client
 from triage.schema import ACTION, CATEGORY, QUESTIONS, ROUTE_TO, SCORE_FIELDS, TIMELINE, URGENCY, email_state
 from triage.text import estimate_tokens
 
@@ -43,22 +43,6 @@ def build_prompt(state: dict) -> str:  # Same questions as Jev, written as text
               "EMAIL:", json.dumps(state, ensure_ascii=False)]
     return "\n".join(lines)
 
-@lru_cache(maxsize=8)  # Reuse one client per provider
-def _client(provider: str, key: str):
-    """One client per provider+key, reused (an inline client gets garbage-collected mid-request)."""
-    if provider == "Gemini":
-        from google import genai
-
-        return genai.Client(api_key=key)
-    if provider == "OpenAI":
-        from openai import OpenAI
-
-        return OpenAI(api_key=key)
-    import anthropic
-
-    return anthropic.Anthropic(api_key=key)
-
-
 def call_llm(keys: dict, prompt: str, schema=None):  # One request to Gemini, OpenAI or Claude
     """One request to the chosen provider. Returns (parsed schema or text, input tokens, output tokens)."""
     provider, model = keys["provider"], keys["model"]
@@ -67,7 +51,9 @@ def call_llm(keys: dict, prompt: str, schema=None):  # One request to Gemini, Op
     if provider == "Gemini":
         from google.genai import types
 
-        config = types.GenerateContentConfig(response_mime_type="application/json", response_schema=schema) if schema else None
+        think = types.ThinkingConfig(thinking_level="LOW") if model.startswith("gemini-3") else None  # short answers: think less
+        config = types.GenerateContentConfig(thinking_config=think, **(
+            {"response_mime_type": "application/json", "response_schema": schema} if schema else {}))
         r = client.models.generate_content(model=model, contents=prompt, config=config)
         u = r.usage_metadata
         if not r.text:  # blocked by a safety filter, or the whole token budget went on thinking

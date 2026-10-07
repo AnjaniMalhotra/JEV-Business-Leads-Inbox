@@ -38,6 +38,8 @@ def reply_error(exc: Exception, name: str) -> str:
         hint = f"{name}: this model isn't available to your key. Pick another model under *Replies are written by*."
     elif "429" in text or "resource_exhausted" in low or "quota" in low:
         hint = f"{name}: rate limit or free-tier quota reached. Wait a minute or pick another model."
+    elif "timed out" in low or "timeout" in low or "deadline" in low:
+        hint = f"{name} took longer than a minute and was stopped. Try again, or pick a faster model."
     elif "no text" in low:
         hint = f"{name} returned an empty reply (often a safety filter). Try again or pick another model."
     else:
