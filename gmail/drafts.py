@@ -1,4 +1,5 @@
 """Save an LLM reply as a draft in the visitor's Gmail Drafts, in the original thread. Nothing is ever sent."""
+import html
 import imaplib
 import re
 import time
@@ -18,6 +19,12 @@ def drafts_folder(conn) -> str:
     return "[Gmail]/Drafts"
 
 
+def as_html(text: str) -> str:
+    """Plain text -> simple HTML: blank lines start a paragraph, single line breaks stay line breaks."""
+    paragraphs = [p.strip() for p in text.strip().split("\n\n") if p.strip()]
+    return "".join(f"<p>{html.escape(p).replace(chr(10), '<br>')}</p>" for p in paragraphs)
+
+
 def save_reply_draft(conn, email: dict, text: str, from_address: str) -> str:
     """Add the reply to Drafts. Returns when it was saved (each save adds a draft; nothing is overwritten)."""
     msg = EmailMessage()  # Build a plain reply email
@@ -26,6 +33,7 @@ def save_reply_draft(conn, email: dict, text: str, from_address: str) -> str:
     msg["Subject"] = subject if subject.lower().startswith("re:") else f"Re: {subject}"
     if isinstance(email.get("message_id"), str) and email["message_id"]:  # Gmail threads it with the original
         msg["In-Reply-To"] = msg["References"] = email["message_id"]
-    msg.set_content(text)
+    msg.set_content(text)  # plain text for simple mail apps
+    msg.add_alternative(as_html(text), subtype="html")  # Gmail opens the draft as rich text, so lines flow to the page width
     conn.append(f'"{drafts_folder(conn)}"', "\\Draft", imaplib.Time2Internaldate(time.time()), msg.as_bytes())
     return datetime.now().strftime("%H:%M")

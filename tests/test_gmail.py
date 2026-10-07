@@ -80,6 +80,7 @@ def test_reply_draft_goes_into_drafts_folder_and_thread():
     folder, flags, message = conn.appended
     assert folder == '"[Gmail]/Brouillons"' and flags == "\\Draft"   # found by its \Drafts flag, any language
     assert "In-Reply-To: <m1@mail>" in message and "Subject: Re: Contract question" in message
+    assert "text/html" in message and "<p>Thanks, will review.</p>" in message  # rich text: no hard wrapping in Gmail
 
 
 def test_wrong_app_password_gives_a_clear_error(monkeypatch):
